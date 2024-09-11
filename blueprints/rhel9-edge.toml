@@ -1,0 +1,8 @@
+name = "rhel9-edge"
+description = "blueprint-rhel9-edge"
+version = "0.0.1"
+modules = [ ]
+groups = [ ]
+
+[customizations]
+hostname = "edge"
