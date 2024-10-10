@@ -1,6 +1,6 @@
 name = "rhel9-edge"
 description = "blueprint-rhel9-edge"
-version = "0.0.2"
+version = "0.2.0"
 modules = []
 groups = []
 distro = ""
