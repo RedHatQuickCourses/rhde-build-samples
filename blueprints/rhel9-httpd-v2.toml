@@ -1,9 +1,12 @@
 name = "rhel9-edge"
 description = "blueprint-rhel9-edge"
-version = "0.0.1"
+version = "0.0.2"
 modules = []
 groups = []
 distro = ""
+
+[[packages]]
+name = "cockpit"
 
 [[packages]]
 name = "httpd"
@@ -12,7 +15,8 @@ name = "httpd"
 hostname = "edge"
 
 [customizations.services]
-enabled = ["sshd", "httpd"]
+enabled = ["sshd", "httpd", "cockpit"]
 
 [customizations.firewall.services]
-enabled = ["ssh", "http"]
+enabled = ["ssh", "http", "cockpit"]
+

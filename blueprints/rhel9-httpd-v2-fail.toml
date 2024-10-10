@@ -1,6 +1,6 @@
 name = "rhel9-edge"
 description = "blueprint-rhel9-edge"
-version = "0.0.1"
+version = "0.0.2"
 modules = []
 groups = []
 distro = ""
@@ -16,3 +16,18 @@ enabled = ["sshd", "httpd"]
 
 [customizations.firewall.services]
 enabled = ["ssh", "http"]
+
+# didn't work with ostree composes
+
+[[customizations.files]]
+path = "/var/www/html/index.html"
+mode = "0644"
+user = "root"
+group = "root"
+data = """
+<html>
+<body>
+<h1>I am an Edge Device!</h1>
+</body>
+</html>
+"""
