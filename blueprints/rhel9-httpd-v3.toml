@@ -1,0 +1,25 @@
+name = "rhel9-edge"
+description = "blueprint-rhel9-edge"
+version = "0.3.0"
+modules = []
+groups = []
+distro = ""
+
+[[packages]]
+name = "cockpit"
+
+[[packages]]
+name = "httpd"
+
+[[packages]]
+name = "php"
+
+[customizations]
+hostname = "edge"
+
+[customizations.services]
+enabled = ["sshd", "httpd", "cockpit"]
+
+[customizations.firewall.services]
+enabled = ["ssh", "http", "cockpit"]
+
