@@ -14,6 +14,9 @@ name = "httpd"
 [[packages]]
 name = "php"
 
+[[packages]]
+name = "php-fpm"
+
 [customizations]
 hostname = "edge"
 
