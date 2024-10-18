@@ -1,13 +1,15 @@
 name = "rhel9-mysql"
 description = "an edge database server"
 version = "0.1.0"
+modules = []
+groups = []
 distro = ""
 
 [[packages]]
 name = "mysql-server"
 
 [customizations]
-hostname = "edge-db"
+hostname = "db"
 
 [customizations.services]
 enabled = ["sshd", "mysqld"]

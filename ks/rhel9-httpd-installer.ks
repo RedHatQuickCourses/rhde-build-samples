@@ -1,6 +1,6 @@
 lang en_US.UTF-8
 keyboard us
-timezone Etc/UTC --isUtc
+timezone Etc/UTC --utc
 text
 
 zerombr
@@ -11,7 +11,7 @@ rootpw --lock
 reboot
 
 network --bootproto=dhcp
-ostreesetup --osname=rhel --remote=db --url=file:///run/install/repo/ostree/repo --ref=rhel/9/x86_64/db --nogpg
+ostreesetup --osname=rhel --remote=edge --url=file:///run/install/repo/ostree/repo --ref=rhel/9/x86_64/edge --nogpg
 
 %post --log=/var/log/anaconda/post-install.log --erroronfail
 

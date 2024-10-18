@@ -1,0 +1,3 @@
+name = "httpd-installer"
+description = "blueprint-httpd-installer"
+version = "0.1.0"
