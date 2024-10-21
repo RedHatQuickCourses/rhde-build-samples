@@ -1,0 +1,19 @@
+name = "rhel9-mysql"
+description = "an edge database server"
+version = "0.2.0"
+distro = ""
+
+[[packages]]
+name = "mysql-server"
+
+[[packages]]
+name = "nano"
+
+[customizations]
+hostname = "edge-db"
+
+[customizations.services]
+enabled = ["sshd", "mysqld"]
+
+[customizations.firewall.services]
+enabled = ["ssh", "mysql"]
