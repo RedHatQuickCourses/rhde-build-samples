@@ -1,0 +1,7 @@
+id = "fastdata"
+name = "RHEL Fast Data Path Packages"
+type = "yum-baseurl"
+url = "http://servera.lab.example.com/rpms/fast-datapath-for-rhel-9-x86_64-rpms/"
+check_gpg = false
+check_ssl = false
+system = false

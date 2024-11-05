@@ -1,0 +1,7 @@
+id = "openshift"
+name = "OpenShift Packages"
+type = "yum-baseurl"
+url = "http://servera.lab.example.com/rpms/rhocp-4.17-for-rhel-9-x86_64-rpms/"
+check_gpg = false
+check_ssl = false
+system = false

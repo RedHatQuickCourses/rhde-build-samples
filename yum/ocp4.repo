@@ -1,0 +1,6 @@
+[rhocp-4.17-for-rhel-9-x86_64-rpms]
+baseurl = http://servera.lab.example.com/rpms/rhocp-4.17-for-rhel-9-x86_64-rpms
+enabled = true
+gpgcheck = false
+name = Red Hat OpenShift 4.17
+
