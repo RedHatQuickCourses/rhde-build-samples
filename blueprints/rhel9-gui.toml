@@ -1,0 +1,26 @@
+name = "rhel9-gui"
+description = "Base blueprint for a kiosk"
+version = "0.1.0"
+modules = []
+distro = ""
+
+[[ groups ]]
+name = "Server with GUI"
+
+[customizations]
+hostname = "kiosk"
+
+[customizations.services]
+enabled = ["sshd"]
+
+[customizations.firewall.services]
+enabled = ["ssh"]
+
+[[customizations.user]]
+name = "core"
+description = "Initial user"
+# Use mkpasswd -m sha512 to get a hash for 'redhat123'
+password = 'REPLACE_WITH_PASSWD_HASH'
+key = "REPLACE_WTH_SSH_PUB_KEY"
+groups = ["users", "wheel"]
+
