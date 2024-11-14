@@ -1,0 +1,10 @@
+[copr:copr.fedorainfracloud.org:group_osbuild:osbuild-composer-ostree-dracut-fix]
+name=Copr repo for osbuild-composer-ostree-dracut-fix owned by @osbuild
+baseurl=https://download.copr.fedorainfracloud.org/results/@osbuild/osbuild-composer-ostree-dracut-fix/rhel-9-$basearch/
+type=rpm-md
+skip_if_unavailable=True
+gpgcheck=1
+gpgkey=https://download.copr.fedorainfracloud.org/results/@osbuild/osbuild-composer-ostree-dracut-fix/pubkey.gpg
+repo_gpgcheck=0
+enabled=1
+enabled_metadata=1
