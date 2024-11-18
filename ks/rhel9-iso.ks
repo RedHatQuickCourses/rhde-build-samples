@@ -19,6 +19,7 @@ selinux --enforcing
 user --name=student --password=student --groups=wheel
 
 firstboot --disable
+reboot
 
 # Run 'hostnamectl set-hostname' after installation to change it for use with libvirtnss
 network --bootproto=dhcp --hostname=rhelvm99
