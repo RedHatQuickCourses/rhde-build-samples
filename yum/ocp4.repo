@@ -4,4 +4,3 @@ enabled = true
 gpgcheck = true
 gpgkey = http://content.example.com/rhel9.4/x86_64/dvd/RPM-GPG-KEY-redhat-release
 name = Red Hat OpenShift 4.17
-
