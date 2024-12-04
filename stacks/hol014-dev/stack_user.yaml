@@ -158,7 +158,7 @@ resources:
     properties:
       cloud_config:
         write_files:
-          - path: /etc/yum.repos.d/rhocp-4.17-for-rhel-9-x86_64-rpms
+          - path: /etc/yum.repos.d/rhocp-4.17-for-rhel-9-x86_64-rpms.repo
             content: |
               [rhocp-4.17-for-rhel-9-x86_64-rpms]
               baseurl = http://content.example.com/rhde/rpms/rhocp-4.17-for-rhel-9-x86_64-rpms
@@ -166,7 +166,7 @@ resources:
               gpgcheck = true
               gpgkey = http://content.example.com/rhel9.4/x86_64/dvd/RPM-GPG-KEY-redhat-release
               name = Red Hat OpenShift 4.17
-          - path: /etc/yum.repos.d/fast-datapath-for-rhel-9-x86_64-rpms
+          - path: /etc/yum.repos.d/fast-datapath-for-rhel-9-x86_64-rpms.repo
             content: |
               [fast-datapath-for-rhel-9-x86_64-rpms]
               baseurl = http://content.example.com/rhde/rpms/fast-datapath-for-rhel-9-x86_64-rpms
@@ -358,11 +358,11 @@ resources:
           disk_bus: ide
           volume_id:
             get_resource: classroom_volume_hdb
-        # - boot_index: -1
-        #   device_type: cdrom
-        #   disk_bus: ide
-        #   volume_id:
-        #     get_resource: classroom_volume_hdc
+        - boot_index: -1
+          device_type: cdrom
+          disk_bus: ide
+          volume_id:
+            get_resource: classroom_volume_hdc
       config_drive: true
       flavor: CPU_2_Memory_2048_Disk_10
       name: classroom
@@ -397,6 +397,8 @@ resources:
         #   - [ sr2, /content/rhel9.4/x86_64/dvd, "iso9660", "ro,auto,_netdev", "0", "0" ]
         # mounts:
         #   - [ sr1, /content/rhel9.4/x86_64/dvd, "iso9660", "ro,auto,_netdev", "0", "0" ]
+        mounts:
+          - [ sr2, /content/rhde, "iso9660", "ro,auto,_netdev", "0", "0" ]
 
         # Don't remove SSH host keys after reboot
         ssh_deletekeys: false
@@ -443,11 +445,17 @@ resources:
   classroom_volume_hdb:
     properties:
       image: rhel-9.4-x86_64-dvd
-      name: classroom-hdd
+      name: classroom-hdb
       size: 12
       metadata: {'export': 'False'}
     type: OS::Cinder::Volume 
-  # Add, as hdc, the image with MicroShift RPMS, images, and installers
+  classroom_volume_hdc:
+    properties:
+      image: rhde-microshift-ptlab
+      name: classroom-hdc
+      size: 12
+      metadata: {'export': 'False'}
+    type: OS::Cinder::Volume 
   classroom_volume_vda:
     properties:
       image: ptlab-generic-classroom-vda-9.2
