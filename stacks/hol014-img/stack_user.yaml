@@ -105,7 +105,10 @@ resources:
       - config: {get_resource: disable_screenreader_config}
 
   # Development Hacks for RHDE-3 (rhde-microshift)
-  # TODO: Add the RHDE ISO with MicroShift repos, containers, etc
+  # DONE: Reduce root disks to prepare for freezing
+  # TODO: Disable extra repos and VG settings to repare for freezong
+  # TODO: Freeze serverb image on RHEL 9.4
+  # TODO: Freeze workstation, servera, serverb images on RHEL 9.5
   # TODO: Configure the registry CNAME to point to servera
 
   # As I'm building custom VM images for workstation, servera, and serverb anyway, why not having those customizations just baked into the image?
@@ -510,7 +513,9 @@ resources:
     properties:
       image: ptlab-generic-servera-vda-9.4
       name: servera-vda
-      size: 50
+      # Reduce to freeze image
+      # size: 50
+      size: 10
     type: OS::Cinder::Volume
   serverb-0_port:
     properties:
@@ -644,8 +649,8 @@ resources:
           volume_id:
             get_resource: workstation_volume_vda
       config_drive: true
-      flavor: CPU_4_Memory_16384_Disk_100
-      #flavor: CPU_2_Memory_6144_Disk_20
+      #flavor: CPU_4_Memory_16384_Disk_100
+      flavor: CPU_2_Memory_6144_Disk_20
       name: workstation
       networks:
         - port:
@@ -667,5 +672,7 @@ resources:
     properties:
       image: ptlab-generic-workstation-vda-9.4
       name: workstation-vda
-      size: 100
+      # Reduce to freeze image
+      # size: 100
+      size: 20
     type: OS::Cinder::Volume
