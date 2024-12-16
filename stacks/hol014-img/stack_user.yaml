@@ -106,7 +106,7 @@ resources:
 
   # Development Hacks for RHDE-3 (rhde-microshift)
   # DONE: Reduce root disks to prepare for freezing
-  # TODO: Disable extra repos and VG settings to repare for freezong
+  # DONE: Disable extra repos and VG settings to repare for freezong
   # TODO: Freeze serverb image on RHEL 9.4
   # TODO: Freeze workstation, servera, serverb images on RHEL 9.5
   # TODO: Configure the registry CNAME to point to servera
@@ -209,8 +209,9 @@ resources:
     properties:
       parts:
       - config: { get_resource: rhel94_repos_config }
-      - config: { get_resource: microshift_repos_config }
-      - config: { get_resource: microshift_vg_config }
+      # Disable for freezing images
+      # - config: { get_resource: microshift_repos_config }
+      # - config: { get_resource: microshift_vg_config }
 
   # Here the config merge seem to have worked well... but I cannot really test the screen reader
   workstation_config:
@@ -218,8 +219,9 @@ resources:
     properties:
       parts:
       - config: { get_resource: rhel94_repos_config }
-      - config: { get_resource: microshift_repos_config }
       - config: { get_resource: { if: [validate_screenreader, enable_config, disable_config] }}
+      # Disable for freezing images
+      # - config: { get_resource: microshift_repos_config }
 
   classroom_network:
     properties:
@@ -543,9 +545,10 @@ resources:
         - boot_index: 0
           volume_id:
             get_resource: serverb_volume_vda
-        - boot_index: -1
-          volume_id:
-            get_resource: serverb_volume_vdb
+        # Disable for freezing images
+        # - boot_index: -1
+        #   volume_id:
+        #     get_resource: serverb_volume_vdb
       config_drive: true
       flavor: CPU_2_Memory_4096_Disk_10
       name: serverb
