@@ -5,11 +5,6 @@ IMAGE_PULL_FILE=~/mirror-pull-secret
 IMAGE_LOCAL_DIR=$IMAGES_DIRECTORY/app-containers
 TARGET_REGISTRY=servera.lab.example.com:8443
 
-image_tag=mirror-$(date +%y%m%d%H%M%S)
-image_cnt=1
-   # Uses timestamp and counter as a tag on the target images to avoid
-   # their overwrite by the 'latest' automatic tagging
-
 pushd "${IMAGE_LOCAL_DIR}" >/dev/null
 while read -r src_manifest ; do
    # Remove the manifest.json file name
@@ -23,9 +18,7 @@ while read -r src_manifest ; do
    skopeo copy --all --quiet \
       --preserve-digests \
       --authfile "${IMAGE_PULL_FILE}" \
-      dir://"${IMAGE_LOCAL_DIR}/${src_img}" docker://"${dst_img}:${image_tag}-${image_cnt}"
-   # Increment the counter
-   (( image_cnt += 1 ))
+      dir://"${IMAGE_LOCAL_DIR}/${src_img}" docker://"${dst_img}"
 
 done < <(find . -type f -name manifest.json -printf '%P\n')
 popd >/dev/null
