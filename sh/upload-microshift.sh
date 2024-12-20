@@ -1,8 +1,9 @@
 #!/bin/bash
 
+IMAGES_DIRECTORY=~/content.example.com/rhde/oci/
 IMAGE_PULL_FILE=~/mirror-pull-secret
-IMAGE_LOCAL_DIR=~/microshift-containers
-TARGET_REGISTRY=registry.lab.example.com:8443
+IMAGE_LOCAL_DIR=$IMAGES_DIRECTORY/microshift-containers
+TARGET_REGISTRY=servera.lab.example.com:8443
 
 image_tag=mirror-$(date +%y%m%d%H%M%S)
 image_cnt=1
@@ -20,7 +21,7 @@ while read -r src_manifest ; do
    # Run the image upload command
    echo "Uploading '${src_img}' to '${dst_img}'"
    skopeo copy --all --quiet \
-      --preserve-digests --dest-tls-verify=false \
+      --preserve-digests \
       --authfile "${IMAGE_PULL_FILE}" \
       dir://"${IMAGE_LOCAL_DIR}/${src_img}" docker://"${dst_img}:${image_tag}-${image_cnt}"
    # Increment the counter
