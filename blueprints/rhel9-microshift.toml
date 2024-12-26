@@ -1,0 +1,120 @@
+name = "rhel9-microshift"
+description = "Base blueprint with microshift"
+version = "0.1.0"
+modules = []
+groups = []
+distro = ""
+
+[customizations]
+hostname = "ushift"
+
+[[packages]]
+name = "microshift"
+
+[customizations.services]
+enabled = ["sshd", "microshift"]
+
+[customizations.firewall.services]
+enabled = ["ssh"]
+
+[customizations.firewall]
+ports = ["6443:tcp"]
+
+#[[customizations.directories]]
+#path = "/etc/foobar"
+#mode = "0755"
+#user = "root"
+#group = "root"
+#ensure_parents = false
+
+[[customizations.files]]
+path = "/etc/crio/openshift-pull-secret"
+mode = "0600"
+user = "root"
+group = "root"
+data = """
+REPLACE_PULL_SECRET
+"""
+
+[[customizations.files]]
+path = "/etc/pki/ca-trust/source/anchors/quay-rootCA.pem"
+mode = "0644"
+user = "root"
+group = "root"
+data = """
+REPLACE_QUAY_CA
+"""
+
+[[customizations.files]]
+path = "/etc/containers/registries.conf.d/999-microshift-mirror.conf"
+mode = "0644"
+user = "root"
+group = "root"
+data = """
+path = "/etc/containers/registries.conf.d/999-microshift-mirror.conf"
+mode = "0644"
+user = "root"
+group = "root"
+data = """
+[[registry]]
+    prefix = ""
+    location = "servera.lab.example.com:8443"
+    mirror-by-digest-only = true
+    insecure = false
+
+[[registry]]
+    prefix = ""
+    location = "quay.io"
+    mirror-by-digest-only = true
+[[registry.mirror]]
+    location = "servera.lab.example.com:8443"
+    insecure = false
+
+[[registry]]
+    prefix = ""
+    location = "registry.redhat.io"
+    mirror-by-digest-only = true
+[[registry.mirror]]
+    location = "servera.lab.example.com:8443"
+    insecure = false
+
+[[registry]]
+    prefix = ""
+    location = "registry.access.redhat.com"
+    mirror-by-digest-only = true
+[[registry.mirror]]
+    location = "servera.lab.example.com:8443"
+    insecure = false
+"""
+
+[[customizations.files]]
+path = "/etc/containers/policy.json"
+mode = "0644"
+user = "root"
+group = "root"
+data = """
+{
+	"default": [
+    	{
+        	"type": "insecureAcceptAnything"
+    	}
+	],
+	"transports":
+    	{
+        	"docker-daemon":
+            	{
+                	"": [{"type":"insecureAcceptAnything"}]
+            	}
+    	}
+}
+"""
+
+# I was told this is a bad idea, and it's now deprecated. Must switch to kickstart.
+[[customizations.user]]
+name = "core"
+description = "Initial user"
+# Use mkpasswd -m sha512 to get a hash for 'redhat123'
+password = 'REPLACE_WITH_PASSWD_HASH'
+key = "REPLACE_WTH_SSH_PUB_KEY"
+groups = ["users", "wheel"]
+
