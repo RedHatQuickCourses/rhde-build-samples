@@ -17,13 +17,7 @@ reboot
 network --bootproto=dhcp 
 ostreesetup --nogpg --osname=rhel --remote=edge --url=file:///run/install/repo/ostree/repo --ref=rhel/9/x86_64/ushift
 
-# Will I need scripts here to configure image policy, disable signatures, and provision namespace/sa?
 %post --log=/var/log/anaconda/post-install.log --erroronfail
-
-# Make kubeconfig available for local user
-sudo cp /var/lib/microshift/resources/kubeadmin/kubeconfig /home/core/local-admin
-sudo chown core /home/core/local-admin
-chmod a-w /home/core/local-admin
 
 # local user for console login and SSH
 useradd -g wheel core
