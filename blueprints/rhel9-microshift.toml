@@ -104,34 +104,34 @@ data = """
 """
 
 [[containers]]
-source = "servera.lab.example.com:8443/openshift-release-dev/ocp-v4.0-art-dev@sha256:98bcfe497a8550cff543321ba5c6535b9823aa4b091daf89ebba0bbcafa19208"
+source = "quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:98bcfe497a8550cff543321ba5c6535b9823aa4b091daf89ebba0bbcafa19208"
 
 [[containers]]
-source = "servera.lab.example.com:8443/openshift-release-dev/ocp-v4.0-art-dev@sha256:1b0a5de3da8895f72deed91a79f4ecf83464370ce253494d28b8c98a1586bfc0"
+source = "quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:1b0a5de3da8895f72deed91a79f4ecf83464370ce253494d28b8c98a1586bfc0"
 
 [[containers]]
-source = "servera.lab.example.com:8443/openshift-release-dev/ocp-v4.0-art-dev@sha256:837cf50cade2660742d2f7d146dd3ccd9539860a5a22692b0eb6a2d0616a03d3"
+source = "quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:837cf50cade2660742d2f7d146dd3ccd9539860a5a22692b0eb6a2d0616a03d3"
 
 [[containers]]
-source = "servera.lab.example.com:8443/openshift-release-dev/ocp-v4.0-art-dev@sha256:ea5141e1b1a04c17008afa17e1ef60369bfdf71a7145299be33682c2d156d8e4"
+source = "quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:ea5141e1b1a04c17008afa17e1ef60369bfdf71a7145299be33682c2d156d8e4"
 
 [[containers]]
-source = "servera.lab.example.com:8443/openshift-release-dev/ocp-v4.0-art-dev@sha256:14f7db9f9f68aaf9b6f5977aa960ea608d2142be6ca94f0973eb9f4a92da8996"
+source = "quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:14f7db9f9f68aaf9b6f5977aa960ea608d2142be6ca94f0973eb9f4a92da8996"
 
 [[containers]]
-source = "servera.lab.example.com:8443/openshift-release-dev/ocp-v4.0-art-dev@sha256:c4a9f3ad460247aeedb0765584aa2b50fa44d5ff0aee24924e435057a7fb5bb9"
+source = "quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:c4a9f3ad460247aeedb0765584aa2b50fa44d5ff0aee24924e435057a7fb5bb9"
 
 [[containers]]
-source = "servera.lab.example.com:8443/openshift-release-dev/ocp-v4.0-art-dev@sha256:6b2fc4ac9e1fba264b1fd141acb79f93b840dc176a22bd5a0ca5e3fb28a5992f"
+source = "quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:6b2fc4ac9e1fba264b1fd141acb79f93b840dc176a22bd5a0ca5e3fb28a5992f"
 
 [[containers]]
-source = "servera.lab.example.com:8443/lvms4/lvms-rhel9-operator@sha256:bd6dc4d6e90fdbcdb844759e203c9c591abc5ac29a956257a90bda101a37b76e"
+source = "registry.redhat.io/lvms4/lvms-rhel9-operator@sha256:bd6dc4d6e90fdbcdb844759e203c9c591abc5ac29a956257a90bda101a37b76e"
 
 [[containers]]
-source = "servera.lab.example.com:8443/openshift-release-dev/ocp-v4.0-art-dev@sha256:0849169a28fa3af48eb8e9b224708070e8eeb69355affee5765f7215858cfb4d"
+source = "quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:0849169a28fa3af48eb8e9b224708070e8eeb69355affee5765f7215858cfb4d"
 
 [[containers]]
-source = "servera.lab.example.com:8443/openshift-release-dev/ocp-v4.0-art-dev@sha256:8d58758b9252a1e482bef3ed8861da38fcdead8bc3dd26995a915ec57b0c01c2"
+source = "quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:8d58758b9252a1e482bef3ed8861da38fcdead8bc3dd26995a915ec57b0c01c2"
 
 [[containers]]
 source = "servera.lab.example.com:8443/ubi9/ubi"
@@ -143,6 +143,7 @@ path = "/etc/systemd/system/firstboot-microshift.service"
 data = """
 [Service]
 Type=oneshot
+Requires=microshift.service
 ExecStart=update-ca-trust
 ExecStart=firewall-offline-cmd --zone=trusted --add-source=10.42.0.0/16
 ExecStart=firewall-offline-cmd --zone=trusted --add-source=169.254.169.1
@@ -159,11 +160,14 @@ mode = "0644"
 user = "root"
 group = "root"
 data = """
-if [ -d /home/core ]; then
-  sudo cp /var/lib/microshift/resources/kubeadmin/kubeconfig /home/core/local-admin
-  sudo cp /var/lib/microshift/resources/kubeadmin/ushift/kubeconfig /home/core/remote-admin
-  sudo chown core /home/core/{local,remote}-admin
-  chmod a-w /home/core/{local,remote}-admin
+if [ -d /var/home/core ]; then
+  while ! [ -r /var/lib/microshift/resources/kubeadmin/kubeconfig ]; do
+    sleep 1
+  done
+  sudo cp /var/lib/microshift/resources/kubeadmin/kubeconfig /var/home/core/local-admin
+  sudo cp /var/lib/microshift/resources/kubeadmin/ushift/kubeconfig /var/home/core/remote-admin
+  sudo chown core /var/home/core/{local,remote}-admin
+  chmod a-w /var/home/core/{local,remote}-admin
 fi
 """
 
@@ -172,7 +176,8 @@ path = "/etc/systemd/system/firstboot-microshift-user.service"
 data = """
 [Service]
 Type=oneshot
-After=microshift.unit
+Requires=microshift.service
+After=microshift.service
 ExecStart=bash /etc/microshift/firstboot-microshift-user
 
 [Install]

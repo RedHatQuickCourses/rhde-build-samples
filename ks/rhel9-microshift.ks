@@ -20,12 +20,6 @@ ostreesetup --nogpg --osname=rhel --remote=edge --url=http://servera.lab.example
 
 %post --log=/var/log/anaconda/post-install.log --erroronfail
 
-# Does NOT work: MicroShift didn't start yet to create those files.
-# Make kubeconfig available for local user
-sudo cp /var/lib/microshift/resources/kubeadmin/kubeconfig /home/core/local-admin
-$ sudo chown core:core /home/core/local-admin
-$ chmod a-w /home/core/local-admin
-
 # local user for console login and SSH
 useradd -g wheel core
 echo "core:redhat123" | chpasswd
