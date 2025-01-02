@@ -1,0 +1,13 @@
+[rhel-9.5-for-x86_64-baseos-rpms]
+baseurl = http://content.example.com/rhel9.5/x86_64/dvd/BaseOS
+enabled = true
+gpgcheck = true
+gpgkey = http://content.example.com/rhel9.5/x86_64/dvd/RPM-GPG-KEY-redhat-release
+name = Red Hat Enterprise Linux 9.5 BaseOS (dvd)
+
+[rhel-9.5-for-x86_64-appstream-rpms]
+baseurl = http://content.example.com/rhel9.5/x86_64/dvd/AppStream
+enabled = true
+gpgcheck = true
+gpgkey = http://content.example.com/rhel9.5/x86_64/dvd/RPM-GPG-KEY-redhat-release
+name = Red Hat Enterprise Linux 9.5 AppStream (dvd)
