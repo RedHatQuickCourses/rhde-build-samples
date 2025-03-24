@@ -1,0 +1,5 @@
+registry.redhat.io/rhel9-eus/rhel-9.4-bootc:9.4
+registry.redhat.io/rhel9/rhel-bootc:9.5
+registry.redhat.io/openshift4/microshift-bootc-rhel9:v4.18.0
+registry.redhat.io/rhel9/bootc-image-builder:9.4
+registry.redhat.io/rhel9/bootc-image-builder:9.5
