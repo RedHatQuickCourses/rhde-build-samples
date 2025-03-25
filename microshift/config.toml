@@ -1,0 +1,34 @@
+[customizations]
+hostname = "ushift"
+
+[customizations.installer.kickstart]
+contents = """
+lang en_US.UTF-8
+keyboard us
+timezone Etc/UTC --utc
+text --non-interactive
+rootpw --lock
+
+zerombr
+clearpart --all --initlabel
+part /boot/efi --fstype=efi --size=200
+part /boot --fstype=xfs --asprimary --size=800
+part pv.01 --grow
+volgroup rhel pv.01
+logvol / --vgname=rhel --fstype=xfs --size=10240 --name=root
+
+network --bootproto=dhcp --device=link --activate --onboot=on
+
+%post --log=/var/log/anaconda/post-install.log --erroronfail
+
+# local user for console login and SSH
+useradd -g wheel core
+echo "core:redhat123" | chpasswd
+mkdir /home/core/.ssh
+cat > /home/core/.ssh/authorized_keys << EOFSSH
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDGqWrq70HSyShKaoujOUOzz6NJg7aYUMqaRNvroLO7ZfZky8XsavNudYWxZofwNOmGMFqv2BQG+QNrAa/I9yZJQlZkpvcbUhdtsANx8RPA56Njbms8KBNeDX0WB2YVVhyrGQdYDao3kVSIn/C/NMjURC8ps54RZd2KK9Jgf2Uq7IscAfiVduohuiNg5SMhOOvS8YU1nKPZQA7lPTmKndHyALY3q2J2RIP8aqkZS+o+sxKsgRUX+oX9D3oITyAxRhF3kCbtZD8+lxHHxEyfuJYSumbwUYnG1R4RxE9dAmbo+0+ehYijq4YCNf33C/1cIzZOByIHWJqr8IGsDeuI9IaNrLfnWzuxB3Vh5haSeZHt26lI17v0kdlZjl+7ly/sIHgp6MTZCArBzX3D07LjD/ohnqgJ/SwiklToNUr+OtUogaxC+leQRAg1MoKNWCGzFwgnLGkyHHMKf2ByqNzU+gWR5Hdgz+c2GKBiL3AXq0HL4GbuKA6qRkIIRlobsUgLgR0= initial key for edge devices
+EOFSSH
+
+%end
+"""
+
