@@ -1,14 +1,9 @@
 FROM servera.lab.example.com:8443/rhel9/rhel-bootc:9.5
 #FROM registry.redhat.io/rhel9/rhel-bootc:9.5
 
-# Is there a way of adding all files from a directory at once?
-#ADD rhel-9.5-for-x86_64-baseos-rpms.repo /etc/yum.repos.d/rhel-9.5-for-x86_64-baseos-rpms.repo
-#ADD rhel-9.5-for-x86_64-appstream-rpms.repo /etc/yum.repos.d/rhel-9.5-for-x86_64-appstream-rpms.repo
-#ADD rhocp-4.17-for-rhel-9-x86_64-rpms.repo /etc/yum.repos.d/rhocp-4.17-for-rhel-9-x86_64-rpms.repo
-#ADD fast-datapath-for-rhel-9-x86_64-rpms.repo /etc/yum.repos.d/fast-datapath-for-rhel-9-x86_64-rpms.repo
 COPY yum.d/* /etc/yum.repos.d/
 
-RUN dnf install -y firewalld microshift && \
+RUN dnf install -y firewalld microshift microshift-release-info && \
     systemctl enable microshift && \
     dnf clean all
 
@@ -40,5 +35,44 @@ ADD containers-policy.json.nosigs /etc/containers/policy.json
 ADD quay-rootCA.pem /etc/pki/ca-trust/source/anchors
 RUN update-ca-trust
 
-# Add a first-boot unit to copy the kubeconfig, like I did for OSTREE
+# Embed MicroShift containers in the bootc image
+# Adapted from https://github.com/openshift/microshift/blob/main/docs/config/Containerfile.bootc-embedded-rhel9
+# It honors the config for the mirror registry (previous instructions)
+
+ENV IMAGE_STORAGE_DIR=/usr/lib/containers/storage
+ENV IMAGE_LIST_FILE=${IMAGE_STORAGE_DIR}/image-list.txt
+
+RUN --mount=type=secret,id=pullsecret,dst=/run/secrets/pull-secret.json \
+    images="$(jq -r ".images[]" /usr/share/microshift/release/release-"$(uname -m)".json)" ; \
+    mkdir -p "${IMAGE_STORAGE_DIR}" ; \
+    for img in ${images} ; do \
+        sha="$(echo "${img}" | sha256sum | awk '{print $1}')" ; \
+        skopeo copy --all --preserve-digests \
+            --authfile /run/secrets/pull-secret.json \
+            "docker://${img}" "dir:$IMAGE_STORAGE_DIR/${sha}" ; \
+        echo "${img},${sha}" >> "${IMAGE_LIST_FILE}" ; \
+    done
+
+# Install a systemd drop-in unit to address the problem with image upgrades
+# overwriting the container images in additional store.
+# See https://issues.redhat.com/browse/RHEL-75827
+RUN cat > /usr/bin/microshift-copy-images <<EOF
+#!/bin/bash
+set -eux -o pipefail
+while IFS="," read -r img sha ; do
+    skopeo copy --preserve-digests \
+        "dir:${IMAGE_STORAGE_DIR}/\${sha}" \
+        "containers-storage:\${img}"
+done < "${IMAGE_LIST_FILE}"
+EOF
+
+RUN chmod 755 /usr/bin/microshift-copy-images && \
+    mkdir -p /etc/systemd/system/microshift.service.d
+
+RUN cat > /etc/systemd/system/microshift.service.d/microshift-copy-images.conf <<EOF
+[Service]
+ExecStartPre=/usr/bin/microshift-copy-images
+EOF
+
+# TODO: Add a first-boot unit to copy the kubeconfig, like I did for OSTREE
 
