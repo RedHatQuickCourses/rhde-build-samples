@@ -1,0 +1,6 @@
+[fast-datapath-for-rhel-9-x86_64-rpms]
+baseurl = http://content.example.com/rhde/rpms/fast-datapath-for-rhel-9-x86_64-rpms
+enabled = true
+gpgcheck = true
+gpgkey = http://content.example.com/rhel9.5/x86_64/dvd/RPM-GPG-KEY-redhat-release
+name = RHEL 9 Fast Data Path          

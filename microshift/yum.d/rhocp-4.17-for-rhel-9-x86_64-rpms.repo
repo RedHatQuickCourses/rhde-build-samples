@@ -1,0 +1,6 @@
+[rhocp-4.17-for-rhel-9-x86_64-rpms]
+baseurl = http://content.example.com/rhde/rpms/rhocp-4.17-for-rhel-9-x86_64-rpms
+enabled = true
+gpgcheck = true
+gpgkey = http://content.example.com/rhel9.5/x86_64/dvd/RPM-GPG-KEY-redhat-release
+name = Red Hat OpenShift 4.17

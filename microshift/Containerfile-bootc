@@ -2,20 +2,21 @@ FROM servera.lab.example.com:8443/rhel9/rhel-bootc:9.5
 #FROM registry.redhat.io/rhel9/rhel-bootc:9.5
 
 # Is there a way of adding all files from a directory at once?
-ADD rhel-9.5-for-x86_64-baseos-rpms.repo /etc/yum.repos.d/rhel-9.5-for-x86_64-baseos-rpms.repo
-ADD rhel-9.5-for-x86_64-appstream-rpms.repo /etc/yum.repos.d/rhel-9.5-for-x86_64-appstream-rpms.repo
-ADD rhocp-4.17-for-rhel-9-x86_64-rpms.repo /etc/yum.repos.d/rhocp-4.17-for-rhel-9-x86_64-rpms.repo
-ADD fast-datapath-for-rhel-9-x86_64-rpms.repo /etc/yum.repos.d/fast-datapath-for-rhel-9-x86_64-rpms.repo
+#ADD rhel-9.5-for-x86_64-baseos-rpms.repo /etc/yum.repos.d/rhel-9.5-for-x86_64-baseos-rpms.repo
+#ADD rhel-9.5-for-x86_64-appstream-rpms.repo /etc/yum.repos.d/rhel-9.5-for-x86_64-appstream-rpms.repo
+#ADD rhocp-4.17-for-rhel-9-x86_64-rpms.repo /etc/yum.repos.d/rhocp-4.17-for-rhel-9-x86_64-rpms.repo
+#ADD fast-datapath-for-rhel-9-x86_64-rpms.repo /etc/yum.repos.d/fast-datapath-for-rhel-9-x86_64-rpms.repo
+COPY yum.d/* /etc/yum.repos.d/
 
 RUN dnf install -y firewalld microshift && \
     systemctl enable microshift && \
     dnf clean all
 
-# Mandatory firewall configuration
-RUN firewall-offline-cmd --zone=public --add-port=22/tcp && \
-    firewall-offline-cmd --zone=public --add-port=6443/tcp && \
-    firewall-offline-cmd --zone=trusted --add-source=10.42.0.0/16 && \
-    firewall-offline-cmd --zone=trusted --add-source=169.254.169.1
+# Mandatory firewall configuration for OVNK + exposing SSH and Kubernetes API ports
+RUN firewall-offline-cmd --zone=trusted --add-source=10.42.0.0/16 && \
+    firewall-offline-cmd --zone=trusted --add-source=169.254.169.1 && \
+    firewall-offline-cmd --zone=public --add-port=22/tcp && \
+    firewall-offline-cmd --zone=public --add-port=6443/tcp
 
 # Create a systemd unit to recursively make the root filesystem subtree
 # shared as required by OVN images
@@ -33,7 +34,7 @@ EOF
 RUN systemctl enable microshift-make-rshared.service
 
 # Use the mirror registry for MicroShift containers
-ADD mirror-pull-secret /etc/crio/openshift-pull-secret
+#ADD mirror-pull-secret /etc/crio/openshift-pull-secret
 ADD 999-microshift-mirror.conf /etc/containers/registries.conf.d/999-microshift-mirror.conf
 ADD containers-policy.json.nosigs /etc/containers/policy.json
 ADD quay-rootCA.pem /etc/pki/ca-trust/source/anchors
