@@ -76,3 +76,5 @@ EOF
 
 # TODO: Add a first-boot unit to copy the kubeconfig, like I did for OSTREE
 
+# From https://developers.redhat.com/articles/2025/02/26/best-practices-building-bootable-containers?source=sso#best_practices_for_linting
+RUN bootc container lint
