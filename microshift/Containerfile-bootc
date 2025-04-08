@@ -1,5 +1,4 @@
 FROM servera.lab.example.com:8443/rhel9/rhel-bootc:9.5
-#FROM registry.redhat.io/rhel9/rhel-bootc:9.5
 
 COPY yum.d/* /etc/yum.repos.d/
 
@@ -29,7 +28,6 @@ EOF
 RUN systemctl enable microshift-make-rshared.service
 
 # Use the mirror registry for MicroShift containers
-#ADD mirror-pull-secret /etc/crio/openshift-pull-secret
 ADD 999-microshift-mirror.conf /etc/containers/registries.conf.d/999-microshift-mirror.conf
 ADD containers-policy.json.nosigs /etc/containers/policy.json
 ADD quay-rootCA.pem /etc/pki/ca-trust/source/anchors
