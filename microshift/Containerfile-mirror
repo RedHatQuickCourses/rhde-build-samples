@@ -34,7 +34,38 @@ ADD containers-policy.json.nosigs /etc/containers/policy.json
 ADD quay-rootCA.pem /etc/pki/ca-trust/source/anchors
 RUN update-ca-trust
 
-# TODO: Add a first-boot unit to copy the kubeconfig, like I did for OSTREE
+# First-boot unit to copy the kubeconfig for the core user home dir
+
+RUN cat > /etc/microshift/firstboot-microshift-user <<EOF
+set -euxo pipefail
+
+if [ -d /var/home/core ]; then
+  while ! [ -r /var/lib/microshift/resources/kubeadmin/kubeconfig ]; do
+    sleep 1
+  done
+  sudo cp /var/lib/microshift/resources/kubeadmin/kubeconfig /var/home/core/local-admin
+  sudo cp /var/lib/microshift/resources/kubeadmin/ushift/kubeconfig /var/home/core/remote-admin
+  sudo chown core /var/home/core/{local,remote}-admin
+  chmod a-w /var/home/core/{local,remote}-admin
+  echo 'export KUBECONFIG=~/local-admin' >> /var/home/core/.bashrc
+  ls -la /var/home/core/ > /root/home-core
+fi
+EOF
+
+RUN cat > /etc/systemd/system/firstboot-microshift-user.service <<EOF
+[Unit]
+Type=oneshot
+Requires=microshift.service
+After=microshift.service
+
+[Service]
+ExecStart=bash /etc/microshift/firstboot-microshift-user
+
+[Install]
+WantedBy=default.target
+EOF
+
+RUN systemctl enable firstboot-microshift-user
 
 # From https://developers.redhat.com/articles/2025/02/26/best-practices-building-bootable-containers?source=sso#best_practices_for_linting
 RUN bootc container lint
