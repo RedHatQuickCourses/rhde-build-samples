@@ -1,4 +1,4 @@
-FROM servera.lab.example.com:8443/rhel9/rhel-bootc:9.5
+FROM registry.redhat.io/rhel9/rhel-bootc:9.5
 
 COPY yum.d/* /etc/yum.repos.d/
 
@@ -37,11 +37,18 @@ RUN update-ca-trust
 # Adapted from https://github.com/openshift/microshift/blob/main/docs/config/Containerfile.bootc-embedded-rhel9
 # It honors the config for the mirror registry (previous instructions)
 
+# should be possible to add my images to the list from json but need the format right
+#    images="$images servera.lab.example.com:8443/ubi9/ubi" ; \
+# from the json:
+#   "images": {
+#      "cli": "quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:98bcfe497a8550cff543321ba5c6535b9823aa4b091daf89ebba0bbcafa19208",
+
 ENV IMAGE_STORAGE_DIR=/usr/lib/containers/storage
 ENV IMAGE_LIST_FILE=${IMAGE_STORAGE_DIR}/image-list.txt
 
 RUN --mount=type=secret,id=pullsecret,dst=/run/secrets/pull-secret.json \
     images="$(jq -r ".images[]" /usr/share/microshift/release/release-"$(uname -m)".json)" ; \
+    images="$images servera.lab.example.com:8443/ubi9/ubi" ; \
     mkdir -p "${IMAGE_STORAGE_DIR}" ; \
     for img in ${images} ; do \
         sha="$(echo "${img}" | sha256sum | awk '{print $1}')" ; \
@@ -54,6 +61,7 @@ RUN --mount=type=secret,id=pullsecret,dst=/run/secrets/pull-secret.json \
 # Install a systemd drop-in unit to address the problem with image upgrades
 # overwriting the container images in additional store.
 # See https://issues.redhat.com/browse/RHEL-75827
+
 RUN cat > /usr/bin/microshift-copy-images <<EOF
 #!/bin/bash
 set -eux -o pipefail
@@ -72,7 +80,33 @@ RUN cat > /etc/systemd/system/microshift.service.d/microshift-copy-images.conf <
 ExecStartPre=/usr/bin/microshift-copy-images
 EOF
 
-# TODO: Add a first-boot unit to copy the kubeconfig, like I did for OSTREE
+# First-boot unit to copy the kubeconfig for the core user home dir
+
+RUN cat > /etc/microshift/firstboot-microshift-user <<EOF
+#!/bin/bash
+set -euxo pipefail
+
+if [ -d /var/home/core ]; then
+  while ! [ -r /var/lib/microshift/resources/kubeadmin/kubeconfig ]; do
+    sleep 1
+  done
+  sudo cp /var/lib/microshift/resources/kubeadmin/kubeconfig /var/home/core/local-admin
+  sudo cp /var/lib/microshift/resources/kubeadmin/ushift/kubeconfig /var/home/core/remote-admin
+  sudo chown core /var/home/core/{local,remote}-admin
+  chmod a-w /var/home/core/{local,remote}-admin
+fi
+EOF
+
+RUN cat > /etc/systemd/system/firstboot-microshift-user.service <<EOF
+[Service]
+Type=oneshot
+Requires=microshift.service
+After=microshift.service
+ExecStart=bash /etc/microshift/firstboot-microshift-user
+
+[Install]
+WantedBy=default.target
+EOF
 
 # From https://developers.redhat.com/articles/2025/02/26/best-practices-building-bootable-containers?source=sso#best_practices_for_linting
 RUN bootc container lint

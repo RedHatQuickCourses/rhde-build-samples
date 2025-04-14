@@ -26,14 +26,14 @@ network --bootproto=dhcp --device=link --activate --onboot=on
 useradd -g wheel core
 echo "core:redhat123" | chpasswd
 mkdir /home/core/.ssh
-cat > /home/core/.ssh/authorized_keys << EOFSSH
-REPLACE_WTH_SSH_PUB_KEY
-EOFSSH
+cat > /home/core/.ssh/authorized_keys << EOF
+REPLACE_WITH_SSH_PUB_KEY
+EOF
 
-# Need a pull secret to download container images from whatever registries we need (if umages are not embedded into the bootc image)
-cat > /etc/crio/openshift-pull-secret <<EOFPULLS
-REPLACE_WTH_PULL_SECRET
-EOFPULLS
+# Need a pull secret to download container images from whatever registries we need (for images are not embedded into the bootc image)
+cat > /etc/crio/openshift-pull-secret <<EOF
+REPLACE_WITH_PULL_SECRET
+EOF
 chmod 600 /etc/crio/openshift-pull-secret
 
 # Set a hostname, just for convenience
