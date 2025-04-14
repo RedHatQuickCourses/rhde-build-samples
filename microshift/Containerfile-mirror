@@ -1,0 +1,40 @@
+# The mirror config only includes MicroShift images
+FROM servera.lab.example.com:8443/rhel9/rhel-bootc:9.5
+
+COPY yum.d/* /etc/yum.repos.d/
+
+RUN dnf install -y firewalld microshift microshift-release-info && \
+    systemctl enable microshift && \
+    dnf clean all
+
+# Mandatory firewall configuration for OVNK + exposing SSH and Kubernetes API ports
+RUN firewall-offline-cmd --zone=trusted --add-source=10.42.0.0/16 && \
+    firewall-offline-cmd --zone=trusted --add-source=169.254.169.1 && \
+    firewall-offline-cmd --zone=public --add-port=22/tcp && \
+    firewall-offline-cmd --zone=public --add-port=6443/tcp
+
+# Create a systemd unit to recursively make the root filesystem subtree
+# shared as required by OVN images
+RUN cat > /etc/systemd/system/microshift-make-rshared.service <<'EOF'
+[Unit]
+Description=Make root filesystem shared
+Before=microshift.service
+ConditionVirtualization=container
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/mount --make-rshared /
+[Install]
+WantedBy=multi-user.target
+EOF
+RUN systemctl enable microshift-make-rshared.service
+
+# Use the mirror registry for MicroShift containers
+ADD 999-microshift-mirror.conf /etc/containers/registries.conf.d/999-microshift-mirror.conf
+ADD containers-policy.json.nosigs /etc/containers/policy.json
+ADD quay-rootCA.pem /etc/pki/ca-trust/source/anchors
+RUN update-ca-trust
+
+# TODO: Add a first-boot unit to copy the kubeconfig, like I did for OSTREE
+
+# From https://developers.redhat.com/articles/2025/02/26/best-practices-building-bootable-containers?source=sso#best_practices_for_linting
+RUN bootc container lint
