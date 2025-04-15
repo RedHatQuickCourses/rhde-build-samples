@@ -36,7 +36,9 @@ RUN update-ca-trust
 
 # First-boot unit to copy the kubeconfig for the core user home dir
 
-RUN cat > /etc/microshift/firstboot-microshift-user <<EOF
+RUN <<EOF
+
+cat > /etc/microshift/firstboot-microshift-user <<EOF2
 set -euxo pipefail
 
 if [ -d /var/home/core ]; then
@@ -50,9 +52,9 @@ if [ -d /var/home/core ]; then
   echo 'export KUBECONFIG=~/local-admin' >> /var/home/core/.bashrc
   ls -la /var/home/core/ > /root/home-core
 fi
-EOF
+EOF2
 
-RUN cat > /etc/systemd/system/firstboot-microshift-user.service <<EOF
+cat > /etc/systemd/system/firstboot-microshift-user.service <<EOF2
 [Unit]
 Type=oneshot
 Requires=microshift.service
@@ -63,9 +65,11 @@ ExecStart=bash /etc/microshift/firstboot-microshift-user
 
 [Install]
 WantedBy=default.target
-EOF
+EOF2
 
-RUN systemctl enable firstboot-microshift-user
+systemctl enable firstboot-microshift-user
+
+EOF
 
 # From https://developers.redhat.com/articles/2025/02/26/best-practices-building-bootable-containers?source=sso#best_practices_for_linting
 RUN bootc container lint
