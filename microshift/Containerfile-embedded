@@ -1,0 +1,116 @@
+# The mirror config only includes MicroShift images
+FROM servera.lab.example.com:8443/rhel9/rhel-bootc:9.5
+
+COPY yum.d/* /etc/yum.repos.d/
+
+RUN dnf install -y firewalld microshift microshift-release-info && \
+    systemctl enable microshift && \
+    dnf clean all
+
+# Mandatory firewall configuration for OVNK + exposing SSH and Kubernetes API ports
+
+RUN firewall-offline-cmd --zone=trusted --add-source=10.42.0.0/16 && \
+    firewall-offline-cmd --zone=trusted --add-source=169.254.169.1 && \
+    firewall-offline-cmd --zone=public --add-port=22/tcp && \
+    firewall-offline-cmd --zone=public --add-port=6443/tcp
+
+# Create a systemd unit to recursively make the root filesystem subtree
+# shared as required by OVN images
+
+RUN cat > /etc/systemd/system/microshift-make-rshared.service <<'EOF'
+[Unit]
+Description=Make root filesystem shared
+Before=microshift.service
+ConditionVirtualization=container
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/mount --make-rshared /
+[Install]
+WantedBy=multi-user.target
+EOF
+RUN systemctl enable microshift-make-rshared.service
+
+# Use the mirror registry for MicroShift containers
+
+ADD 999-microshift-mirror.conf /etc/containers/registries.conf.d/999-microshift-mirror.conf
+ADD containers-policy.json.nosigs /etc/containers/policy.json
+ADD quay-rootCA.pem /etc/pki/ca-trust/source/anchors
+RUN update-ca-trust
+
+# Embed MicroShift containers in the bootc image
+# adapted from https://github.com/openshift/microshift/blob/main/docs/config/Containerfile.bootc-embedded-rhel9
+
+ENV IMAGE_STORAGE_DIR=/usr/lib/containers/storage
+ENV IMAGE_LIST_FILE=${IMAGE_STORAGE_DIR}/image-list.txt
+
+RUN --mount=type=secret,id=pullsecret,dst=/run/secrets/pull-secret.json <<EOF
+
+images="$(jq -r ".images[]" /usr/share/microshift/release/release-"$(uname -m)".json)" 
+mkdir -p "${IMAGE_STORAGE_DIR}" 
+for img in ${images} ; do 
+    sha="$(echo "${img}" | sha256sum | awk '{print $1}')" 
+    skopeo copy --all --preserve-digests \
+        --authfile /run/secrets/pull-secret.json \
+        "docker://${img}" "dir:$IMAGE_STORAGE_DIR/${sha}" 
+    echo "${img},${sha}" >> "${IMAGE_LIST_FILE}" 
+done
+
+cat > /usr/bin/microshift-copy-images <<EOF2
+#!/bin/bash
+set -eux -o pipefail
+while IFS="," read -r img sha ; do
+    skopeo copy --preserve-digests \
+        "dir:${IMAGE_STORAGE_DIR}/\${sha}" \
+        "containers-storage:\${img}"
+done < "${IMAGE_LIST_FILE}"
+EOF2
+
+chmod 755 /usr/bin/microshift-copy-images
+mkdir -p /usr/lib/systemd/system/microshift.service.d
+
+cat > /usr/lib/systemd/system/microshift.service.d/microshift-copy-images.conf <<EOF2
+[Service]
+ExecStartPre=/usr/bin/microshift-copy-images
+EOF2
+
+EOF
+
+# First-boot unit to copy the kubeconfig for the core user home dir
+
+RUN <<EOF
+
+cat > /etc/microshift/firstboot-microshift-user <<EOF2
+set -euxo pipefail
+
+if [ -d /var/home/core ]; then
+  while ! [ -r /var/lib/microshift/resources/kubeadmin/kubeconfig ]; do
+    sleep 1
+  done
+  sudo cp /var/lib/microshift/resources/kubeadmin/kubeconfig /var/home/core/local-admin
+  sudo cp /var/lib/microshift/resources/kubeadmin/ushift/kubeconfig /var/home/core/remote-admin
+  sudo chown core /var/home/core/{local,remote}-admin
+  chmod a-w /var/home/core/{local,remote}-admin
+  echo 'export KUBECONFIG=~/local-admin' >> /var/home/core/.bashrc
+  ls -la /var/home/core/ > /root/home-core
+fi
+EOF2
+
+cat > /etc/systemd/system/firstboot-microshift-user.service <<EOF2
+[Unit]
+Type=oneshot
+Requires=microshift.service
+After=microshift.service
+
+[Service]
+ExecStart=bash /etc/microshift/firstboot-microshift-user
+
+[Install]
+WantedBy=default.target
+EOF2
+
+systemctl enable firstboot-microshift-user
+
+EOF
+
+# From https://developers.redhat.com/articles/2025/02/26/best-practices-building-bootable-containers?source=sso#best_practices_for_linting
+RUN bootc container lint
