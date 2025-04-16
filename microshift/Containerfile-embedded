@@ -3,21 +3,34 @@ FROM servera.lab.example.com:8443/rhel9/rhel-bootc:9.5
 
 COPY yum.d/* /etc/yum.repos.d/
 
-RUN dnf install -y firewalld microshift microshift-release-info && \
-    systemctl enable microshift && \
-    dnf clean all
+RUN <<EOF
+set -eux
 
-# Mandatory firewall configuration for OVNK + exposing SSH and Kubernetes API ports
+dnf install -y firewalld microshift microshift-release-info
+systemctl enable microshift
+dnf clean all
 
-RUN firewall-offline-cmd --zone=trusted --add-source=10.42.0.0/16 && \
-    firewall-offline-cmd --zone=trusted --add-source=169.254.169.1 && \
-    firewall-offline-cmd --zone=public --add-port=22/tcp && \
-    firewall-offline-cmd --zone=public --add-port=6443/tcp
+EOF
+
+# Mandatory firewall configuration for OVN-Kubernetes CNI + exposing SSH and Kubernetes API ports
+
+RUN <<EOF
+set -eux
+
+firewall-offline-cmd --zone=trusted --add-source=10.42.0.0/16
+firewall-offline-cmd --zone=trusted --add-source=169.254.169.1
+firewall-offline-cmd --zone=public --add-port=22/tcp 
+firewall-offline-cmd --zone=public --add-port=6443/tcp
+
+EOF
 
 # Create a systemd unit to recursively make the root filesystem subtree
 # shared as required by OVN images
 
-RUN cat > /etc/systemd/system/microshift-make-rshared.service <<'EOF'
+RUN <<EOF
+set -eux
+
+cat > /etc/systemd/system/microshift-make-rshared.service <<EOF2
 [Unit]
 Description=Make root filesystem shared
 Before=microshift.service
@@ -27,8 +40,11 @@ Type=oneshot
 ExecStart=/usr/bin/mount --make-rshared /
 [Install]
 WantedBy=multi-user.target
+EOF2
+
+systemctl enable microshift-make-rshared.service
+
 EOF
-RUN systemctl enable microshift-make-rshared.service
 
 # Use the mirror registry for MicroShift containers
 
@@ -39,19 +55,29 @@ RUN update-ca-trust
 
 # Embed MicroShift containers in the bootc image
 # adapted from https://github.com/openshift/microshift/blob/main/docs/config/Containerfile.bootc-embedded-rhel9
+# in this RUN command, you *need* to quote <<"EOF"
 
 ENV IMAGE_STORAGE_DIR=/usr/lib/containers/storage
 ENV IMAGE_LIST_FILE=${IMAGE_STORAGE_DIR}/image-list.txt
 
-RUN --mount=type=secret,id=pullsecret,dst=/run/secrets/pull-secret.json <<EOF
+RUN --mount=type=secret,id=pullsecret,dst=/run/secrets/pull-secret.json <<"EOF"
+set -eux
 
 images="$(jq -r ".images[]" /usr/share/microshift/release/release-"$(uname -m)".json)" 
+
+appimages="servera.lab.example.com:8443/ubi9/ubi"
+for app in ${appimages}; do
+  images="$images $app@$( skopeo inspect --format '{{ .Digest }}' docker://$app )"
+done
+
 mkdir -p "${IMAGE_STORAGE_DIR}" 
 for img in ${images} ; do 
+    echo "Copying $img..."
     sha="$(echo "${img}" | sha256sum | awk '{print $1}')" 
     skopeo copy --all --preserve-digests \
         --authfile /run/secrets/pull-secret.json \
         "docker://${img}" "dir:$IMAGE_STORAGE_DIR/${sha}" 
+    echo "Recording ${sha} as the dir: of ${img}"
     echo "${img},${sha}" >> "${IMAGE_LIST_FILE}" 
 done
 
@@ -78,6 +104,7 @@ EOF
 # First-boot unit to copy the kubeconfig for the core user home dir
 
 RUN <<EOF
+set -eux
 
 cat > /etc/microshift/firstboot-microshift-user <<EOF2
 set -euxo pipefail
@@ -100,10 +127,8 @@ cat > /etc/systemd/system/firstboot-microshift-user.service <<EOF2
 Type=oneshot
 Requires=microshift.service
 After=microshift.service
-
 [Service]
 ExecStart=bash /etc/microshift/firstboot-microshift-user
-
 [Install]
 WantedBy=default.target
 EOF2
@@ -112,5 +137,5 @@ systemctl enable firstboot-microshift-user
 
 EOF
 
-# From https://developers.redhat.com/articles/2025/02/26/best-practices-building-bootable-containers?source=sso#best_practices_for_linting
+# From https://developers.redhat.com/articles/2025/02/26/best-practices-building-bootable-containers#best_practices_for_linting
 RUN bootc container lint
