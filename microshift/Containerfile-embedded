@@ -66,10 +66,10 @@ ENV IMAGE_LIST_FILE=${IMAGE_STORAGE_DIR}/image-list.txt
 RUN --mount=type=secret,id=pullsecret,dst=/run/secrets/pull-secret.json <<"EOF"
 set -eux
 
-appimages="servera.lab.example.com:8443/ubi9/ubi"
+appimages="servera.lab.example.com:8443/ubi9/ubi:latest"
 images="$(jq -r ".images[]" /usr/share/microshift/release/release-"$(uname -m)".json)" 
 for app in ${appimages}; do
-  images="$images $app@$( skopeo inspect --authfile /run/secrets/pull-secret.json --format '{{ .Digest }}' docker://$app )"
+  images="$images $app"
 done
 
 mkdir -p "${IMAGE_STORAGE_DIR}" 
