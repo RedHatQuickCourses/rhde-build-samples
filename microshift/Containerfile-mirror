@@ -1,3 +1,6 @@
+# Containerfile for a bootc image with MicroShift, using a private mirror registry
+# Plus convenience configurations for remote SSH and Kubernetes API access
+
 # The mirror config only includes MicroShift images
 FROM servera.lab.example.com:8443/rhel9/rhel-bootc:9.5
 

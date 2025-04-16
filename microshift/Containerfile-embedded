@@ -1,3 +1,6 @@
+# Containerfile for a bootc image with MicroShift + application images embedded
+# And convenience configurations for remote SSH and Kubernetes API access
+
 # The mirror config only includes MicroShift images
 FROM servera.lab.example.com:8443/rhel9/rhel-bootc:9.5
 
@@ -24,7 +27,7 @@ firewall-offline-cmd --zone=public --add-port=6443/tcp
 
 EOF
 
-# Create a systemd unit to recursively make the root filesystem subtree
+# Systemd unit to recursively make the root filesystem subtree
 # shared as required by OVN images
 
 RUN <<EOF
@@ -55,7 +58,7 @@ RUN update-ca-trust
 
 # Embed MicroShift containers in the bootc image
 # adapted from https://github.com/openshift/microshift/blob/main/docs/config/Containerfile.bootc-embedded-rhel9
-# in this RUN command, you *need* to quote <<"EOF"
+# in this RUN instruction, you *must* to quote <<"EOF"
 
 ENV IMAGE_STORAGE_DIR=/usr/lib/containers/storage
 ENV IMAGE_LIST_FILE=${IMAGE_STORAGE_DIR}/image-list.txt
@@ -63,21 +66,18 @@ ENV IMAGE_LIST_FILE=${IMAGE_STORAGE_DIR}/image-list.txt
 RUN --mount=type=secret,id=pullsecret,dst=/run/secrets/pull-secret.json <<"EOF"
 set -eux
 
-images="$(jq -r ".images[]" /usr/share/microshift/release/release-"$(uname -m)".json)" 
-
 appimages="servera.lab.example.com:8443/ubi9/ubi"
+images="$(jq -r ".images[]" /usr/share/microshift/release/release-"$(uname -m)".json)" 
 for app in ${appimages}; do
-  images="$images $app@$( skopeo inspect --format '{{ .Digest }}' docker://$app )"
+  images="$images $app@$( skopeo inspect --authfile /run/secrets/pull-secret.json --format '{{ .Digest }}' docker://$app )"
 done
 
 mkdir -p "${IMAGE_STORAGE_DIR}" 
 for img in ${images} ; do 
-    echo "Copying $img..."
     sha="$(echo "${img}" | sha256sum | awk '{print $1}')" 
     skopeo copy --all --preserve-digests \
         --authfile /run/secrets/pull-secret.json \
         "docker://${img}" "dir:$IMAGE_STORAGE_DIR/${sha}" 
-    echo "Recording ${sha} as the dir: of ${img}"
     echo "${img},${sha}" >> "${IMAGE_LIST_FILE}" 
 done
 
