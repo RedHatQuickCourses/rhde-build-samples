@@ -33,7 +33,7 @@ EOF
 RUN <<EOF
 set -eux
 
-cat > /etc/systemd/system/microshift-make-rshared.service <<EOF2
+cat > /usr/lib/systemd/system/microshift-make-rshared.service <<EOF2
 [Unit]
 Description=Make root filesystem shared
 Before=microshift.service
@@ -122,7 +122,7 @@ if [ -d /var/home/core ]; then
 fi
 EOF2
 
-cat > /etc/systemd/system/firstboot-microshift-user.service <<EOF2
+cat > /usr/lib/systemd/system/firstboot-microshift-user.service <<EOF2
 [Unit]
 Type=oneshot
 Requires=microshift.service
