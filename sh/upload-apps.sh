@@ -1,6 +1,7 @@
 #!/bin/bash
 
-IMAGES_DIRECTORY=~/content.example.com/rhde/oci/
+#IMAGES_DIRECTORY=~/content.example.com/rhde/oci/
+IMAGES_DIRECTORY=~/
 IMAGE_PULL_FILE=~/mirror-pull-secret
 IMAGE_LOCAL_DIR=$IMAGES_DIRECTORY/app-containers
 TARGET_REGISTRY=servera.lab.example.com:8443
