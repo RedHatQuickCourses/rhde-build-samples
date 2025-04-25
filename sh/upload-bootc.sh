@@ -2,7 +2,7 @@
 
 # this is the same as upload-apps.sh just a different images dir
 
-IMAGES_DIRECTORY=~/content.example.com/rhde/oci/
+IMAGES_DIRECTORY=~/
 IMAGE_PULL_FILE=~/mirror-pull-secret
 IMAGE_LOCAL_DIR=$IMAGES_DIRECTORY/bootc-containers
 TARGET_REGISTRY=servera.lab.example.com:8443
